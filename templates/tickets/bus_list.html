@@ -1,0 +1,16 @@
+
+{% extends 'tickets/base.html' %}
+{% block title %}Available Buses{% endblock %}
+{% block content %}
+<h2>Available Buses</h2>
+<ul>
+  {% for bus in buses %}
+    <li>
+      {{ bus.bus_number }} - {{ bus.route.origin }} to {{ bus.route.destination }} - Departure: {{ bus.departure_time }}
+      <a href="{% url 'booking' bus.id %}">Book</a>
+    </li>
+  {% empty %}
+    <li>No buses available.</li>
+  {% endfor %}
+</ul>
+{% endblock %}

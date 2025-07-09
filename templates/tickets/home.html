@@ -1,0 +1,8 @@
+
+{% extends 'tickets/base.html' %}
+{% block title %}Home - Bus Ticketing System{% endblock %}
+{% block content %}
+<h1>Welcome to Nepal Bus Ticketing System</h1>
+<p>Book your bus tickets easily and quickly.</p>
+<a href="{% url 'bus_list' %}">View Buses</a>
+{% endblock %}
