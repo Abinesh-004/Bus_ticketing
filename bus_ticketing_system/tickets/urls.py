@@ -17,6 +17,7 @@ urlpatterns = [
     path('login/', auth_views.LoginView.as_view(template_name='tickets/login.html'), name='login'),
     path('logout/', auth_views.LogoutView.as_view(), name='logout'),
     path('profile/', views.profile_view, name='profile'),
+    path('buses/', views.bus_list, name='bus_list'),  # New pattern without args
     
     # Password reset
     path('password-reset/', 

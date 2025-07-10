@@ -1,41 +1,39 @@
-from django.urls import path
-from django.contrib.auth import views as auth_views
-from . import views
+"""
+URL configuration for bus_ticketing_system project.
+
+The `urlpatterns` list routes URLs to views. For more information please see:
+    https://docs.djangoproject.com/en/5.1/topics/http/urls/
+Examples:
+Function views
+    1. Add an import:  from my_app import views
+    2. Add a URL to urlpatterns:  path('', views.home, name='home')
+Class-based views
+    1. Add an import:  from other_app.views import Home
+    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
+Including another URLconf
+    1. Import the include() function: from django.urls import include, path
+    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
+"""
+"""
+URL configuration for bus_ticketing_system project.
+"""
+from django.contrib import admin
+from django.urls import path, include
+from django.conf import settings
+from django.conf.urls.static import static
 
 urlpatterns = [
-    # Main pages
-    path('', views.home, name='home'),
-    path('buses/<str:origin>/<str:destination>/<str:date>/<int:passengers>/', 
-         views.bus_list, name='bus_list'),
-    path('booking/<int:trip_id>/', views.booking_view, name='booking'),
-    path('payment/<uuid:booking_id>/', views.payment_view, name='payment'),
-    path('booking-detail/<uuid:booking_id>/', views.booking_detail, name='booking_detail'),
-    path('cancel-booking/<uuid:booking_id>/', views.cancel_booking, name='cancel_booking'),
-    
-    # User authentication
-    path('register/', views.register_view, name='register'),
-    path('login/', auth_views.LoginView.as_view(template_name='tickets/login.html'), name='login'),
-    path('logout/', auth_views.LogoutView.as_view(), name='logout'),
-    path('profile/', views.profile_view, name='profile'),
-    
-    # Password reset
-    path('password-reset/', 
-         auth_views.PasswordResetView.as_view(template_name='tickets/password_reset.html'),
-         name='password_reset'),
-    path('password-reset/done/', 
-         auth_views.PasswordResetDoneView.as_view(template_name='tickets/password_reset_done.html'),
-         name='password_reset_done'),
-    path('password-reset-confirm/<uidb64>/<token>/', 
-         auth_views.PasswordResetConfirmView.as_view(template_name='tickets/password_reset_confirm.html'),
-         name='password_reset_confirm'),
-    path('password-reset-complete/', 
-         auth_views.PasswordResetCompleteView.as_view(template_name='tickets/password_reset_complete.html'),
-         name='password_reset_complete'),
-    
-    # API endpoints
-    path('api/seat-status/<int:trip_id>/', views.get_seat_status, name='seat_status_api'),
-    path('api/search-cities/', views.search_cities, name='search_cities_api'),
-    
-    # Admin
-    path('admin-dashboard/', views.admin_dashboard, name='admin_dashboard'),
+    path('admin/', admin.site.urls),
+    path('', include('tickets.urls')),
+    path('api/', include('tickets.urls')),
 ]
+
+# Serve media files in development
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+
+# Customize admin site
+admin.site.site_header = "Nepal Bus Ticketing System"
+admin.site.site_title = "Bus Ticketing Admin"
+admin.site.index_title = "Welcome to Bus Ticketing Administration"
