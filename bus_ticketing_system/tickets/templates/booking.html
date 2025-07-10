@@ -1,31 +1,464 @@
-
 {% extends 'tickets/base.html' %}
-{% block title %}Booking - {{ bus.bus_number }}{% endblock %}
+{% load static %}
+
+{% block title %}Book Ticket - Nepal Bus Ticketing System{% endblock %}
+
 {% block content %}
+<div class="container mt-5 pt-4">
+    <div class="row">
+        <!-- Bus Information -->
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-bus me-2"></i>{{ bus.name }}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Route Details</h6>
+                            <p class="mb-1"><strong>From:</strong> {{ bus.route.from_city }}</p>
+                            <p class="mb-1"><strong>To:</strong> {{ bus.route.to_city }}</p>
+                            <p class="mb-1"><strong>Distance:</strong> {{ bus.route.distance }} km</p>
+                            <p class="mb-1"><strong>Duration:</strong> {{ bus.estimated_duration }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Schedule</h6>
+                            <p class="mb-1"><strong>Departure:</strong> {{ bus.departure_time|time:"H:i" }}</p>
+                            <p class="mb-1"><strong>Arrival:</strong> {{ bus.arrival_time|time:"H:i" }}</p>
+                            <p class="mb-1"><strong>Date:</strong> {{ departure_date|date:"F d, Y" }}</p>
+                            <p class="mb-1"><strong>Price:</strong> <span class="text-primary fw-bold">NPR {{ bus.price }}</span></p>
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <h6>Amenities</h6>
+                            <div class="amenities-list">
+                                {% if bus.has_wifi %}
+                                    <span class="badge bg-success me-2"><i class="fas fa-wifi me-1"></i>WiFi</span>
+                                {% endif %}
+                                {% if bus.has_ac %}
+                                    <span class="badge bg-primary me-2"><i class="fas fa-snowflake me-1"></i>AC</span>
+                                {% endif %}
+                                {% if bus.has_charging %}
+                                    <span class="badge bg-warning me-2"><i class="fas fa-charging-station me-1"></i>Charging</span>
+                                {% endif %}
+                                {% if bus.has_entertainment %}
+                                    <span class="badge bg-info me-2"><i class="fas fa-tv me-1"></i>Entertainment</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-<h2>Booking for {{ bus.bus_number }}</h2>
-<p>Route: {{ bus.route.origin }} → {{ bus.route.destination }}</p>
-<p>Departure: {{ bus.departure_time }}</p>
+            <!-- Seat Selection -->
+            <div class="card">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-couch me-2"></i>Select Your Seats
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="seat-legend mb-4">
+                        <div class="row text-center">
+                            <div class="col">
+                                <div class="legend-item">
+                                    <div class="seat-demo available"></div>
+                                    <small>Available</small>
+                                </div>
+                            </div>
+                            <div class="col">
+                                <div class="legend-item">
+                                    <div class="seat-demo selected"></div>
+                                    <small>Selected</small>
+                                </div>
+                            </div>
+                            <div class="col">
+                                <div class="legend-item">
+                                    <div class="seat-demo booked"></div>
+                                    <small>Booked</small>
+                                </div>
+                            </div>
+                            <div class="col">
+                                <div class="legend-item">
+                                    <div class="seat-demo driver"></div>
+                                    <small>Driver</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
-<h3>Select Your Seat</h3>
+                    <div class="bus-layout">
+                        <div class="bus-front mb-3">
+                            <div class="driver-seat">
+                                <i class="fas fa-user-tie fa-2x"></i>
+                                <small>Driver</small>
+                            </div>
+                        </div>
+                        
+                        <div class="seats-container">
+                            {% for row in seats %}
+                                <div class="seat-row">
+                                    {% for seat in row %}
+                                        <div class="seat-wrapper">
+                                            {% if seat.number %}
+                                                <div class="seat {{ seat.status }}" 
+                                                     data-seat-number="{{ seat.number }}"
+                                                     data-seat-price="{{ bus.price }}"
+                                                     {% if seat.status == 'available' %}onclick="selectSeat(this)"{% endif %}>
+                                                    {{ seat.number }}
+                                                </div>
+                                            {% else %}
+                                                <div class="seat-gap"></div>
+                                            {% endif %}
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-<form method="post">
-  {% csrf_token %}
-  <div class="seat-layout">
-    {% for seat in total_seats|add:"0" %}
-      {% if seat|add:"1" in booked_seats %}
-        <button type="button" class="seat booked" disabled>{{ seat|add:"1" }}</button>
-      {% else %}
-        <button type="button" class="seat available" data-seat="{{ seat|add:"1" }}">{{ seat|add:"1" }}</button>
-      {% endif %}
-      {% if forloop.counter|divisibleby:4 %}<br>{% endif %}
-    {% endfor %}
-  </div>
+        <!-- Booking Summary -->
+        <div class="col-lg-4">
+            <div class="card sticky-top" style="top: 100px;">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-receipt me-2"></i>Booking Summary
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="selected-seats mb-3">
+                        <h6>Selected Seats</h6>
+                        <div id="selectedSeatsDisplay">
+                            <p class="text-muted">No seats selected</p>
+                        </div>
+                    </div>
 
-  <input type="hidden" name="seat_number" id="seatInput">
-  <p>Selected Seat: <span id="selectedSeat">None</span></p>
-  <button type="submit">Book Now</button>
-</form>
+                    <div class="price-breakdown">
+                        <h6>Price Breakdown</h6>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Base Price (per seat):</span>
+                            <span>NPR {{ bus.price }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Number of Seats:</span>
+                            <span id="seatCount">0</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Service Fee:</span>
+                            <span id="serviceFee">NPR 0</span>
+                        </div>
+                        <hr>
+                        <div class="d-flex justify-content-between fw-bold">
+                            <span>Total Amount:</span>
+                            <span id="totalAmount">NPR 0</span>
+                        </div>
+                    </div>
 
-<script src="{% static 'tickets/js/main.js' %}"></script>
+                    <form method="POST" action="{% url 'booking' bus.id %}" class="mt-4">
+                        {% csrf_token %}
+                        <input type="hidden" name="selected_seats" id="selectedSeatsInput">
+                        <input type="hidden" name="departure_date" value="{{ departure_date }}">
+                        
+                        <div class="passenger-info">
+                            <h6>Passenger Information</h6>
+                            <div class="mb-3">
+                                <label for="passenger_name" class="form-label">Full Name</label>
+                                <input type="text" class="form-control" id="passenger_name" name="passenger_name" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="passenger_phone" class="form-label">Phone Number</label>
+                                <input type="tel" class="form-control" id="passenger_phone" name="passenger_phone" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="passenger_email" class="form-label">Email</label>
+                                <input type="email" class="form-control" id="passenger_email" name="passenger_email" required>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-accent btn-lg w-100" id="bookButton" disabled>
+                            <i class="fas fa-credit-card me-2"></i>Proceed to Payment
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.bus-layout {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 20px;
+    padding: 20px;
+    border: 3px solid #dee2e6;
+    position: relative;
+    overflow: hidden;
+}
+
+.bus-layout::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80%;
+    height: 5px;
+    background: linear-gradient(90deg, #FF6B35, #F7931E);
+    border-radius: 0 0 10px 10px;
+}
+
+.bus-front {
+    text-align: center;
+    border-bottom: 2px dashed #dee2e6;
+    padding-bottom: 15px;
+}
+
+.driver-seat {
+    display: inline-block;
+    color: #6c757d;
+}
+
+.seats-container {
+    padding: 20px 0;
+}
+
+.seat-row {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 15px;
+    gap: 10px;
+}
+
+.seat-wrapper {
+    position: relative;
+}
+
+.seat {
+    width: 45px;
+    height: 45px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.seat.available {
+    background: linear-gradient(135deg, #28a745, #20c997);
+    color: white;
+}
+
+.seat.available:hover {
+    transform: scale(1.1);
+    box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
+}
+
+.seat.selected {
+    background: linear-gradient(135deg, #FF6B35, #F7931E);
+    color: white;
+    transform: scale(1.1);
+    box-shadow: 0 4px 8px rgba(255, 107, 53, 0.3);
+}
+
+.seat.booked {
+    background: linear-gradient(135deg, #6c757d, #495057);
+    color: white;
+    cursor: not-allowed;
+}
+
+.seat.driver {
+    background: linear-gradient(135deg, #007bff, #0056b3);
+    color: white;
+    cursor: not-allowed;
+}
+
+.seat-gap {
+    width: 45px;
+    height: 45px;
+}
+
+.seat-legend {
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 15px;
+}
+
+.legend-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+}
+
+.seat-demo {
+    width: 30px;
+    height: 30px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: bold;
+}
+
+.seat-demo.available {
+    background: linear-gradient(135deg, #28a745, #20c997);
+    color: white;
+}
+
+.seat-demo.selected {
+    background: linear-gradient(135deg, #FF6B35, #F7931E);
+    color: white;
+}
+
+.seat-demo.booked {
+    background: linear-gradient(135deg, #6c757d, #495057);
+    color: white;
+}
+
+.seat-demo.driver {
+    background: linear-gradient(135deg, #007bff, #0056b3);
+    color: white;
+}
+
+.selected-seat-item {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 8px 12px;
+    margin-bottom: 5px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.price-breakdown {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 15px;
+    margin-top: 20px;
+}
+
+@media (max-width: 768px) {
+    .seat {
+        width: 35px;
+        height: 35px;
+        font-size: 10px;
+    }
+    
+    .seat-gap {
+        width: 35px;
+        height: 35px;
+    }
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let selectedSeats = [];
+const seatPrice = {{ bus.price }};
+const serviceFeePerSeat = 50;
+
+function selectSeat(seatElement) {
+    const seatNumber = seatElement.getAttribute('data-seat-number');
+    
+    if (seatElement.classList.contains('selected')) {
+        // Deselect seat
+        seatElement.classList.remove('selected');
+        selectedSeats = selectedSeats.filter(seat => seat !== seatNumber);
+    } else {
+        // Select seat (max 5 seats)
+        if (selectedSeats.length < 5) {
+            seatElement.classList.add('selected');
+            selectedSeats.push(seatNumber);
+        } else {
+            alert('You can select maximum 5 seats at a time.');
+            return;
+        }
+    }
+    
+    updateBookingSummary();
+}
+
+function updateBookingSummary() {
+    const selectedSeatsDisplay = document.getElementById('selectedSeatsDisplay');
+    const seatCount = document.getElementById('seatCount');
+    const serviceFee = document.getElementById('serviceFee');
+    const totalAmount = document.getElementById('totalAmount');
+    const selectedSeatsInput = document.getElementById('selectedSeatsInput');
+    const bookButton = document.getElementById('bookButton');
+    
+    if (selectedSeats.length === 0) {
+        selectedSeatsDisplay.innerHTML = '<p class="text-muted">No seats selected</p>';
+        bookButton.disabled = true;
+    } else {
+        let seatsHtml = '';
+        selectedSeats.forEach(seat => {
+            seatsHtml += `
+                <div class="selected-seat-item">
+                    <span>Seat ${seat}</span>
+                    <span>NPR ${seatPrice}</span>
+                </div>
+            `;
+        });
+        selectedSeatsDisplay.innerHTML = seatsHtml;
+        bookButton.disabled = false;
+    }
+    
+    const numSeats = selectedSeats.length;
+    const totalServiceFee = numSeats * serviceFeePerSeat;
+    const total = (numSeats * seatPrice) + totalServiceFee;
+    
+    seatCount.textContent = numSeats;
+    serviceFee.textContent = `NPR ${totalServiceFee}`;
+    totalAmount.textContent = `NPR ${total}`;
+    
+    // Update hidden input
+    selectedSeatsInput.value = selectedSeats.join(',');
+}
+
+// Pre-fill user information if logged in
+{% if user.is_authenticated %}
+document.getElementById('passenger_name').value = '{{ user.first_name }} {{ user.last_name }}';
+document.getElementById('passenger_email').value = '{{ user.email }}';
+{% endif %}
+
+// Form validation
+document.querySelector('form').addEventListener('submit', function(e) {
+    if (selectedSeats.length === 0) {
+        e.preventDefault();
+        alert('Please select at least one seat.');
+        return;
+    }
+    
+    const name = document.getElementById('passenger_name').value.trim();
+    const phone = document.getElementById('passenger_phone').value.trim();
+    const email = document.getElementById('passenger_email').value.trim();
+    
+    if (!name || !phone || !email) {
+        e.preventDefault();
+        alert('Please fill in all passenger information.');
+        return;
+    }
+    
+    // Show loading state
+    const submitButton = document.getElementById('bookButton');
+    submitButton.disabled = true;
+    submitButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing...';
+});
+</script>
 {% endblock %}
