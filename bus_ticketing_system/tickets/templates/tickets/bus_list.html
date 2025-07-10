@@ -1,16 +1,368 @@
-
 {% extends 'tickets/base.html' %}
-{% block title %}Available Buses{% endblock %}
+{% load static %}
+
+{% block title %}Bus Search Results - Nepal Bus Ticketing System{% endblock %}
+
 {% block content %}
-<h2>Available Buses</h2>
-<ul>
-  {% for bus in buses %}
-    <li>
-      {{ bus.bus_number }} - {{ bus.route.origin }} to {{ bus.route.destination }} - Departure: {{ bus.departure_time }}
-      <a href="{% url 'booking' bus.id %}">Book</a>
-    </li>
-  {% empty %}
-    <li>No buses available.</li>
-  {% endfor %}
-</ul>
+<div class="container mt-5 pt-4">
+    <!-- Search Summary -->
+    <div class="search-summary mb-4">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h3 class="mb-2">
+                    <i class="fas fa-bus me-2 text-primary"></i>
+                    {% if from_city and to_city %}
+                        {{ from_city }} → {{ to_city }}
+                    {% else %}
+                        Available Buses
+                    {% endif %}
+                </h3>
+                <p class="text-muted mb-0">
+                    {% if departure_date %}
+                        Departure: {{ departure_date|date:"F d, Y" }}
+                    {% endif %}
+                    {% if buses %}
+                        • {{ buses|length }} bus{{ buses|length|pluralize:"es" }} found
+                    {% endif %}
+                </p>
+            </div>
+            <div class="col-md-4 text-end">
+                <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#searchModal">
+                    <i class="fas fa-search me-2"></i>Modify Search
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="filters-section mb-4">
+        <div class="card">
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label">Sort By</label>
+                        <select class="form-select" id="sortBy">
+                            <option value="departure_time">Departure Time</option>
+                            <option value="price">Price (Low to High)</option>
+                            <option value="duration">Duration</option>
+                            <option value="rating">Rating</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Bus Type</label>
+                        <select class="form-select" id="busType">
+                            <option value="">All Types</option>
+                            <option value="AC">AC</option>
+                            <option value="NON_AC">Non-AC</option>
+                            <option value="SLEEPER">Sleeper</option>
+                            <option value="DELUXE">Deluxe</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Departure Time</label>
+                        <select class="form-select" id="departureTime">
+                            <option value="">Any Time</option>
+                            <option value="morning">Morning (6AM - 12PM)</option>
+                            <option value="afternoon">Afternoon (12PM - 6PM)</option>
+                            <option value="evening">Evening (6PM - 12AM)</option>
+                            <option value="night">Night (12AM - 6AM)</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Price Range</label>
+                        <select class="form-select" id="priceRange">
+                            <option value="">Any Price</option>
+                            <option value="0-500">Under NPR 500</option>
+                            <option value="500-1000">NPR 500 - 1000</option>
+                            <option value="1000-1500">NPR 1000 - 1500</option>
+                            <option value="1500+">Above NPR 1500</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bus List -->
+    <div class="bus-list">
+        {% if buses %}
+            {% for bus in buses %}
+            <div class="bus-card mb-4" data-bus-id="{{ bus.id }}">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-md-3">
+                                <h5 class="bus-name mb-2">{{ bus.name }}</h5>
+                                <div class="bus-details">
+                                    <span class="badge bg-primary me-2">{{ bus.bus_type }}</span>
+                                    <span class="badge bg-success">{{ bus.total_seats }} Seats</span>
+                                </div>
+                                <div class="rating mt-2">
+                                    <div class="stars">
+                                        {% for i in "12345" %}
+                                            <i class="fas fa-star {% if forloop.counter <= 4 %}text-warning{% else %}text-muted{% endif %}"></i>
+                                        {% endfor %}
+                                    </div>
+                                    <small class="text-muted">4.2 (120 reviews)</small>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-3">
+                                <div class="time-info">
+                                    <div class="departure">
+                                        <h6 class="mb-1">{{ bus.departure_time|time:"H:i" }}</h6>
+                                        <small class="text-muted">{{ bus.route.from_city }}</small>
+                                    </div>
+                                    <div class="journey-line my-2">
+                                        <i class="fas fa-arrow-right text-muted"></i>
+                                        <small class="text-muted">{{ bus.estimated_duration }}</small>
+                                    </div>
+                                    <div class="arrival">
+                                        <h6 class="mb-1">{{ bus.arrival_time|time:"H:i" }}</h6>
+                                        <small class="text-muted">{{ bus.route.to_city }}</small>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-2">
+                                <div class="amenities">
+                                    <small class="text-muted d-block mb-1">Amenities:</small>
+                                    {% if bus.has_wifi %}
+                                        <i class="fas fa-wifi text-success me-1" title="WiFi"></i>
+                                    {% endif %}
+                                    {% if bus.has_ac %}
+                                        <i class="fas fa-snowflake text-primary me-1" title="AC"></i>
+                                    {% endif %}
+                                    {% if bus.has_charging %}
+                                        <i class="fas fa-charging-station text-warning me-1" title="Charging"></i>
+                                    {% endif %}
+                                    {% if bus.has_entertainment %}
+                                        <i class="fas fa-tv text-info me-1" title="Entertainment"></i>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-2">
+                                <div class="availability text-center">
+                                    <h6 class="text-success mb-1">{{ bus.available_seats }} Available</h6>
+                                    <small class="text-muted">of {{ bus.total_seats }} seats</small>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-2">
+                                <div class="price-booking text-center">
+                                    <h4 class="price text-primary mb-2">NPR {{ bus.price }}</h4>
+                                    <small class="text-muted d-block mb-3">per person</small>
+                                    {% if bus.available_seats > 0 %}
+                                        <a href="{% url 'booking' bus.id %}" class="btn btn-accent btn-sm">
+                                            <i class="fas fa-ticket-alt me-1"></i>Book Now
+                                        </a>
+                                    {% else %}
+                                        <button class="btn btn-secondary btn-sm" disabled>
+                                            <i class="fas fa-times me-1"></i>Sold Out
+                                        </button>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Expandable Details -->
+                        <div class="bus-details-expand collapse mt-3" id="busDetails{{ bus.id }}">
+                            <hr>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6>Route Details</h6>
+                                    <ul class="list-unstyled">
+                                        <li><i class="fas fa-map-marker-alt me-2"></i>{{ bus.route.from_city }} → {{ bus.route.to_city }}</li>
+                                        <li><i class="fas fa-route me-2"></i>{{ bus.route.distance }} km</li>
+                                        <li><i class="fas fa-clock me-2"></i>{{ bus.estimated_duration }}</li>
+                                    </ul>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6>Operator Details</h6>
+                                    <ul class="list-unstyled">
+                                        <li><i class="fas fa-building me-2"></i>{{ bus.operator_name|default:"Nepal Bus Service" }}</li>
+                                        <li><i class="fas fa-phone me-2"></i>{{ bus.operator_phone|default:"+977-1-4567890" }}</li>
+                                        <li><i class="fas fa-envelope me-2"></i>{{ bus.operator_email|default:"info@nepalbus.com" }}</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="text-center mt-3">
+                            <button class="btn btn-outline-primary btn-sm" data-bs-toggle="collapse" data-bs-target="#busDetails{{ bus.id }}">
+                                <i class="fas fa-chevron-down me-1"></i>More Details
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="no-buses text-center py-5">
+                <i class="fas fa-bus fa-3x text-muted mb-3"></i>
+                <h4>No buses found</h4>
+                <p class="text-muted">Sorry, no buses are available for your selected route and date.</p>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#searchModal">
+                    <i class="fas fa-search me-2"></i>Try Different Search
+                </button>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Pagination -->
+    {% if buses.has_other_pages %}
+    <nav aria-label="Bus search pagination">
+        <ul class="pagination justify-content-center">
+            {% if buses.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ buses.previous_page_number }}{% if request.GET.from_city %}&from_city={{ request.GET.from_city }}{% endif %}{% if request.GET.to_city %}&to_city={{ request.GET.to_city }}{% endif %}{% if request.GET.departure_date %}&departure_date={{ request.GET.departure_date }}{% endif %}">Previous</a>
+                </li>
+            {% endif %}
+            
+            {% for num in buses.paginator.page_range %}
+                {% if buses.number == num %}
+                    <li class="page-item active">
+                        <span class="page-link">{{ num }}</span>
+                    </li>
+                {% else %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ num }}{% if request.GET.from_city %}&from_city={{ request.GET.from_city }}{% endif %}{% if request.GET.to_city %}&to_city={{ request.GET.to_city }}{% endif %}{% if request.GET.departure_date %}&departure_date={{ request.GET.departure_date }}{% endif %}">{{ num }}</a>
+                    </li>
+                {% endif %}
+            {% endfor %}
+            
+            {% if buses.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ buses.next_page_number }}{% if request.GET.from_city %}&from_city={{ request.GET.from_city }}{% endif %}{% if request.GET.to_city %}&to_city={{ request.GET.to_city }}{% endif %}{% if request.GET.departure_date %}&departure_date={{ request.GET.departure_date }}{% endif %}">Next</a>
+                </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+
+<!-- Search Modal -->
+<div class="modal fade" id="searchModal" tabindex="-1" aria-labelledby="searchModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="searchModalLabel">
+                    <i class="fas fa-search me-2"></i>Search Buses
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form method="GET" action="{% url 'bus_list' %}">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="modal_from_city" class="form-label">From</label>
+                            <select class="form-select" id="modal_from_city" name="from_city" required>
+                                <option value="">Select departure city</option>
+                                <option value="Kathmandu" {% if request.GET.from_city == "Kathmandu" %}selected{% endif %}>Kathmandu</option>
+                                <option value="Pokhara" {% if request.GET.from_city == "Pokhara" %}selected{% endif %}>Pokhara</option>
+                                <option value="Chitwan" {% if request.GET.from_city == "Chitwan" %}selected{% endif %}>Chitwan</option>
+                                <option value="Butwal" {% if request.GET.from_city == "Butwal" %}selected{% endif %}>Butwal</option>
+                                <option value="Biratnagar" {% if request.GET.from_city == "Biratnagar" %}selected{% endif %}>Biratnagar</option>
+                                <option value="Nepalgunj" {% if request.GET.from_city == "Nepalgunj" %}selected{% endif %}>Nepalgunj</option>
+                                <option value="Dharan" {% if request.GET.from_city == "Dharan" %}selected{% endif %}>Dharan</option>
+                                <option value="Hetauda" {% if request.GET.from_city == "Hetauda" %}selected{% endif %}>Hetauda</option>
+                                <option value="Itahari" {% if request.GET.from_city == "Itahari" %}selected{% endif %}>Itahari</option>
+                                <option value="Bharatpur" {% if request.GET.from_city == "Bharatpur" %}selected{% endif %}>Bharatpur</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="modal_to_city" class="form-label">To</label>
+                            <select class="form-select" id="modal_to_city" name="to_city" required>
+                                <option value="">Select destination city</option>
+                                <option value="Kathmandu" {% if request.GET.to_city == "Kathmandu" %}selected{% endif %}>Kathmandu</option>
+                                <option value="Pokhara" {% if request.GET.to_city == "Pokhara" %}selected{% endif %}>Pokhara</option>
+                                <option value="Chitwan" {% if request.GET.to_city == "Chitwan" %}selected{% endif %}>Chitwan</option>
+                                <option value="Butwal" {% if request.GET.to_city == "Butwal" %}selected{% endif %}>Butwal</option>
+                                <option value="Biratnagar" {% if request.GET.to_city == "Biratnagar" %}selected{% endif %}>Biratnagar</option>
+                                <option value="Nepalgunj" {% if request.GET.to_city == "Nepalgunj" %}selected{% endif %}>Nepalgunj</option>
+                                <option value="Dharan" {% if request.GET.to_city == "Dharan" %}selected{% endif %}>Dharan</option>
+                                <option value="Hetauda" {% if request.GET.to_city == "Hetauda" %}selected{% endif %}>Hetauda</option>
+                                <option value="Itahari" {% if request.GET.to_city == "Itahari" %}selected{% endif %}>Itahari</option>
+                                <option value="Bharatpur" {% if request.GET.to_city == "Bharatpur" %}selected{% endif %}>Bharatpur</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="modal_departure_date" class="form-label">Departure Date</label>
+                            <input type="date" class="form-control" id="modal_departure_date" name="departure_date" value="{{ request.GET.departure_date }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="modal_passengers" class="form-label">Passengers</label>
+                            <select class="form-select" id="modal_passengers" name="passengers">
+                                <option value="1" {% if request.GET.passengers == "1" %}selected{% endif %}>1 Passenger</option>
+                                <option value="2" {% if request.GET.passengers == "2" %}selected{% endif %}>2 Passengers</option>
+                                <option value="3" {% if request.GET.passengers == "3" %}selected{% endif %}>3 Passengers</option>
+                                <option value="4" {% if request.GET.passengers == "4" %}selected{% endif %}>4 Passengers</option>
+                                <option value="5" {% if request.GET.passengers == "5" %}selected{% endif %}>5+ Passengers</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="text-center mt-4">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="fas fa-search me-2"></i>Search Buses
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Set minimum date to today
+    const dateInputs = document.querySelectorAll('input[type="date"]');
+    dateInputs.forEach(input => {
+        input.min = new Date().toISOString().split('T')[0];
+    });
+
+    // Filter functionality
+    const filterBuses = () => {
+        const sortBy = document.getElementById('sortBy').value;
+        const busType = document.getElementById('busType').value;
+        const departureTime = document.getElementById('departureTime').value;
+        const priceRange = document.getElementById('priceRange').value;
+        
+        // Get current URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        
+        // Add filter parameters
+        if (sortBy) urlParams.set('sort', sortBy);
+        if (busType) urlParams.set('bus_type', busType);
+        if (departureTime) urlParams.set('departure_time', departureTime);
+        if (priceRange) urlParams.set('price_range', priceRange);
+        
+        // Redirect with new filters
+        window.location.search = urlParams.toString();
+    };
+
+    // Add event listeners to filters
+    document.getElementById('sortBy').addEventListener('change', filterBuses);
+    document.getElementById('busType').addEventListener('change', filterBuses);
+    document.getElementById('departureTime').addEventListener('change', filterBuses);
+    document.getElementById('priceRange').addEventListener('change', filterBuses);
+
+    // Toggle collapse icon
+    document.querySelectorAll('[data-bs-toggle="collapse"]').forEach(button => {
+        button.addEventListener('click', function() {
+            const icon = this.querySelector('i');
+            setTimeout(() => {
+                const target = document.querySelector(this.getAttribute('data-bs-target'));
+                if (target.classList.contains('show')) {
+                    icon.classList.remove('fa-chevron-down');
+                    icon.classList.add('fa-chevron-up');
+                } else {
+                    icon.classList.remove('fa-chevron-up');
+                    icon.classList.add('fa-chevron-down');
+                }
+            }, 100);
+        });
+    });
+</script>
 {% endblock %}
