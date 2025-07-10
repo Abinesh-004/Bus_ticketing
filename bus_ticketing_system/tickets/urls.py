@@ -36,6 +36,7 @@ urlpatterns = [
     # API endpoints
     path('api/seat-status/<int:trip_id>/', views.get_seat_status, name='seat_status_api'),
     path('api/search-cities/', views.search_cities, name='search_cities_api'),
+    path('api/buses/', views.bus_list_api, name='bus_list_api'),  
     
     # Admin
     path('admin-dashboard/', views.admin_dashboard, name='admin_dashboard'),
