@@ -1,0 +1,31 @@
+
+{% extends 'tickets/base.html' %}
+{% block title %}Booking - {{ bus.bus_number }}{% endblock %}
+{% block content %}
+
+<h2>Booking for {{ bus.bus_number }}</h2>
+<p>Route: {{ bus.route.origin }} → {{ bus.route.destination }}</p>
+<p>Departure: {{ bus.departure_time }}</p>
+
+<h3>Select Your Seat</h3>
+
+<form method="post">
+  {% csrf_token %}
+  <div class="seat-layout">
+    {% for seat in total_seats|add:"0" %}
+      {% if seat|add:"1" in booked_seats %}
+        <button type="button" class="seat booked" disabled>{{ seat|add:"1" }}</button>
+      {% else %}
+        <button type="button" class="seat available" data-seat="{{ seat|add:"1" }}">{{ seat|add:"1" }}</button>
+      {% endif %}
+      {% if forloop.counter|divisibleby:4 %}<br>{% endif %}
+    {% endfor %}
+  </div>
+
+  <input type="hidden" name="seat_number" id="seatInput">
+  <p>Selected Seat: <span id="selectedSeat">None</span></p>
+  <button type="submit">Book Now</button>
+</form>
+
+<script src="{% static 'tickets/js/main.js' %}"></script>
+{% endblock %}

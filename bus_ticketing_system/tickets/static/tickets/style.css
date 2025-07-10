@@ -1,0 +1,46 @@
+/* tickets/static/tickets/css/style.css */
+body {
+    font-family: Arial, sans-serif;
+    margin: 20px;
+  }
+  
+  header nav a {
+    margin-right: 10px;
+  }
+  
+  main {
+    margin-top: 20px;
+  }
+
+  /* tickets/static/tickets/css/style.css */
+
+.seat-layout {
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+
+.seat {
+  width: 50px;
+  height: 50px;
+  margin: 5px;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  background-color: #ccc;
+  border-radius: 4px;
+}
+
+.seat.booked {
+  background-color: #e74c3c;
+  cursor: not-allowed;
+}
+
+.seat.available {
+  background-color: #2ecc71;
+}
+
+.seat.selected {
+  background-color: #f1c40f;
+}
+
+  

@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -22,9 +23,14 @@
       {% endif %}
     </nav>
   </header>
+
   <main>
-    {% block content %}{% endblock %}
+    {% block content %}
+    {% endblock %}
   </main>
-  <script src="{% static 'tickets/js/main.js' %}"></script>
+
+  <footer>
+    <p>&copy; 2025 Nepal Bus Ticketing</p>
+  </footer>
 </body>
 </html>

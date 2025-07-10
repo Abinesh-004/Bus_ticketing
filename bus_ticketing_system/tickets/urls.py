@@ -10,4 +10,6 @@ urlpatterns = [
     path('profile/', views.profile, name='profile'),
     path('register/', views.register, name='register'),
     path('admin-dashboard/', views.admin_dashboard, name='admin_dashboard'),
+    path('api/booked-seats/<int:bus_id>/', views.api_booked_seats, name='api_booked_seats'),
+
 ]

@@ -14,11 +14,26 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
-# bus_ticketing_system/urls.py
+"""
+URL configuration for bus_ticketing_system project.
+"""
 from django.contrib import admin
 from django.urls import path, include
+from django.conf import settings
+from django.conf.urls.static import static
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('tickets.urls')),
+    path('api/', include('tickets.urls')),
 ]
+
+# Serve media files in development
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+
+# Customize admin site
+admin.site.site_header = "Nepal Bus Ticketing System"
+admin.site.site_title = "Bus Ticketing Admin"
+admin.site.index_title = "Welcome to Bus Ticketing Administration"

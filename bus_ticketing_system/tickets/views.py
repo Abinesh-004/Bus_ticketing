@@ -1,4 +1,4 @@
-# tickets/views.py
+
 
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
@@ -7,12 +7,19 @@ from .models import Bus, Booking
 from .forms import RegisterForm, BookingForm
 from django.contrib.auth.models import User
 
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from .models import Booking
+
 def home(request):
     return render(request, 'tickets/home.html')
 
 def bus_list(request):
     buses = Bus.objects.all().order_by('departure_time')
     return render(request, 'tickets/bus_list.html', {'buses': buses})
+
+
+
 
 @login_required
 def booking(request, bus_id):
@@ -47,6 +54,7 @@ def register(request):
             user.userprofile.save()
             login(request, user)
             return redirect('home')
+        
     else:
         form = RegisterForm()
     return render(request, 'tickets/register.html', {'form': form})
@@ -58,3 +66,10 @@ def admin_dashboard(request):
     buses = Bus.objects.all()
     bookings = Booking.objects.all()
     return render(request, 'tickets/admin_dashboard.html', {'buses': buses, 'bookings': bookings})
+
+
+
+@api_view(['GET'])
+def api_booked_seats(request, bus_id):
+    seats = Booking.objects.filter(bus_id=bus_id).values_list('seat_number', flat=True)
+    return Response({'booked_seats': list(seats)})
