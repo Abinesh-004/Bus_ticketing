@@ -1,264 +1,82 @@
 {% extends 'tickets/base.html' %}
-{% load static %}
 
 {% block title %}My Profile - Nepal Bus Ticketing{% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-gradient-to-br from-orange-50 to-red-50 py-8">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <!-- Header -->
-        <div class="bg-white rounded-xl shadow-lg p-6 mb-8 border border-orange-100">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center">
-                    <div class="h-16 w-16 bg-gradient-to-r from-orange-500 to-red-500 rounded-full flex items-center justify-center">
-                        <span class="text-white font-bold text-xl">
-                            {{ user.first_name.0|default:user.username.0 }}{{ user.last_name.0|default:'' }}
-                        </span>
-                    </div>
-                    <div class="ml-4">
-                        <h1 class="text-2xl font-bold text-gray-900">
-                            {{ user.first_name }} {{ user.last_name }}
-                        </h1>
-                        <p class="text-gray-600">{{ user.email }}</p>
-                        <p class="text-sm text-orange-600">Member since {{ user.date_joined|date:"M Y" }}</p>
-                    </div>
-                </div>
-                <button class="bg-gradient-to-r from-orange-500 to-red-500 text-white px-4 py-2 rounded-lg hover:from-orange-600 hover:to-red-600 transition-all duration-200 transform hover:scale-105">
-                    Edit Profile
-                </button>
+<div class="row">
+    <div class="col-md-4">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header" style="background-color: #e67e22; color: white;">
+                <h4>Profile Information</h4>
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    {{ profile_form.as_p }}
+                    <button type="submit" class="btn btn-warning w-100">Update Profile</button>
+                </form>
             </div>
         </div>
-
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <!-- Sidebar -->
-            <div class="lg:col-span-1">
-                <div class="bg-white rounded-xl shadow-lg p-6 border border-orange-100">
-                    <h2 class="text-lg font-semibold text-gray-900 mb-4">Quick Stats</h2>
-                    <div class="space-y-4">
-                        <div class="flex items-center justify-between p-3 bg-orange-50 rounded-lg">
-                            <div class="flex items-center">
-                                <div class="bg-orange-500 p-2 rounded-full">
-                                    <svg class="h-4 w-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                    </svg>
-                                </div>
-                                <span class="ml-3 text-sm font-medium text-gray-700">Total Bookings</span>
-                            </div>
-                            <span class="text-lg font-bold text-orange-600">{{ total_bookings|default:0 }}</span>
-                        </div>
-                        
-                        <div class="flex items-center justify-between p-3 bg-green-50 rounded-lg">
-                            <div class="flex items-center">
-                                <div class="bg-green-500 p-2 rounded-full">
-                                    <svg class="h-4 w-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
-                                    </svg>
-                                </div>
-                                <span class="ml-3 text-sm font-medium text-gray-700">Total Spent</span>
-                            </div>
-                            <span class="text-lg font-bold text-green-600">Rs. {{ total_spent|default:0 }}</span>
-                        </div>
-                        
-                        <div class="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
-                            <div class="flex items-center">
-                                <div class="bg-blue-500 p-2 rounded-full">
-                                    <svg class="h-4 w-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
-                                    </svg>
-                                </div>
-                                <span class="ml-3 text-sm font-medium text-gray-700">Favorite Route</span>
-                            </div>
-                            <span class="text-sm font-bold text-blue-600">{{ favorite_route|default:"N/A" }}</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Quick Actions -->
-                <div class="bg-white rounded-xl shadow-lg p-6 mt-6 border border-orange-100">
-                    <h2 class="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
-                    <div class="space-y-3">
-                        <a href="{% url 'home' %}" class="flex items-center w-full p-3 text-left bg-orange-50 hover:bg-orange-100 rounded-lg transition-colors">
-                            <svg class="h-5 w-5 text-orange-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-                            </svg>
-                            <span class="text-sm font-medium text-gray-700">Book New Ticket</span>
-                        </a>
-                        
-                        <button class="flex items-center w-full p-3 text-left bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors">
-                            <svg class="h-5 w-5 text-gray-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z"></path>
-                            </svg>
-                            <span class="text-sm font-medium text-gray-700">Share Profile</span>
-                        </button>
-                        
-                        <button class="flex items-center w-full p-3 text-left bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors">
-                            <svg class="h-5 w-5 text-gray-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
-                            <span class="text-sm font-medium text-gray-700">Download Receipts</span>
-                        </button>
-                    </div>
-                </div>
+    </div>
+    
+    <div class="col-md-8">
+        <div class="card shadow-sm">
+            <div class="card-header" style="background-color: #f39c12; color: white;">
+                <h4>My Bookings</h4>
             </div>
-
-            <!-- Main Content -->
-            <div class="lg:col-span-2">
-                <!-- Filter Tabs -->
-                <div class="bg-white rounded-xl shadow-lg p-6 mb-6 border border-orange-100">
-                    <div class="flex space-x-1 bg-gray-100 p-1 rounded-lg">
-                        <button class="filter-tab flex-1 px-4 py-2 text-sm font-medium text-center rounded-md bg-orange-500 text-white transition-all duration-200" data-filter="all">
-                            All Bookings
-                        </button>
-                        <button class="filter-tab flex-1 px-4 py-2 text-sm font-medium text-center rounded-md text-gray-700 hover:text-gray-900 transition-all duration-200" data-filter="upcoming">
-                            Upcoming
-                        </button>
-                        <button class="filter-tab flex-1 px-4 py-2 text-sm font-medium text-center rounded-md text-gray-700 hover:text-gray-900 transition-all duration-200" data-filter="completed">
-                            Completed
-                        </button>
-                        <button class="filter-tab flex-1 px-4 py-2 text-sm font-medium text-center rounded-md text-gray-700 hover:text-gray-900 transition-all duration-200" data-filter="cancelled">
-                            Cancelled
-                        </button>
-                    </div>
+            <div class="card-body">
+                {% if bookings %}
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Booking ID</th>
+                                <th>Bus Details</th>
+                                <th>Journey</th>
+                                <th>Seats</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for booking in bookings %}
+                            <tr>
+                                <td>#{{ booking.id }}</td>
+                                <td>
+                                    <strong>{{ booking.schedule.bus.company.name }}</strong><br>
+                                    {{ booking.schedule.bus.bus_number }} ({{ booking.schedule.bus.bus_type }})
+                                </td>
+                                <td>
+                                    {{ booking.schedule.route.origin }} to {{ booking.schedule.route.destination }}<br>
+                                    {{ booking.schedule.departure_time|date:"D, d M Y" }} at {{ booking.schedule.departure_time|time }}
+                                </td>
+                                <td>{{ booking.seat_numbers }}</td>
+                                <td>NPR {{ booking.total_price }}</td>
+                                <td>
+                                    <span class="badge bg-{% if booking.status == 'Confirmed' %}success{% else %}danger{% endif %}">
+                                        {{ booking.status }}
+                                    </span>
+                                </td>
+                                <td>
+                                    {% if booking.status == 'Confirmed' %}
+                                    <a href="{% url 'cancel_booking' booking.id %}" class="btn btn-sm btn-outline-danger">
+                                        Cancel
+                                    </a>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
                 </div>
-
-                <!-- Bookings List -->
-                <div class="space-y-6">
-                    {% for booking in bookings %}
-                    <div class="booking-card bg-white rounded-xl shadow-lg p-6 border border-orange-100 {% if booking.status == 'upcoming' %}border-l-4 border-l-orange-500{% elif booking.status == 'completed' %}border-l-4 border-l-green-500{% elif booking.status == 'cancelled' %}border-l-4 border-l-red-500{% endif %}" data-status="{{ booking.status }}">
-                        <div class="flex items-center justify-between mb-4">
-                            <div class="flex items-center">
-                                <div class="bg-gradient-to-r from-orange-500 to-red-500 p-3 rounded-full">
-                                    <svg class="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                    </svg>
-                                </div>
-                                <div class="ml-4">
-                                    <h3 class="text-lg font-semibold text-gray-900">{{ booking.bus.name }}</h3>
-                                    <p class="text-sm text-gray-600">Booking ID: #{{ booking.id }}</p>
-                                </div>
-                            </div>
-                            <div class="text-right">
-                                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium 
-                                    {% if booking.status == 'upcoming' %}bg-orange-100 text-orange-800
-                                    {% elif booking.status == 'completed' %}bg-green-100 text-green-800
-                                    {% elif booking.status == 'cancelled' %}bg-red-100 text-red-800
-                                    {% endif %}">
-                                    {{ booking.status|title }}
-                                </span>
-                            </div>
-                        </div>
-
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                            <div class="bg-gray-50 p-4 rounded-lg">
-                                <h4 class="text-sm font-medium text-gray-500 mb-1">Route</h4>
-                                <p class="text-sm font-semibold text-gray-900">{{ booking.route.from_city }} → {{ booking.route.to_city }}</p>
-                            </div>
-                            <div class="bg-gray-50 p-4 rounded-lg">
-                                <h4 class="text-sm font-medium text-gray-500 mb-1">Travel Date</h4>
-                                <p class="text-sm font-semibold text-gray-900">{{ booking.travel_date|date:"M d, Y" }}</p>
-                                <p class="text-xs text-gray-600">{{ booking.departure_time }}</p>
-                            </div>
-                            <div class="bg-gray-50 p-4 rounded-lg">
-                                <h4 class="text-sm font-medium text-gray-500 mb-1">Seats & Amount</h4>
-                                <p class="text-sm font-semibold text-gray-900">{{ booking.seats|length }} seat(s)</p>
-                                <p class="text-xs text-orange-600 font-medium">Rs. {{ booking.total_amount }}</p>
-                            </div>
-                        </div>
-
-                        <div class="flex items-center justify-between border-t pt-4">
-                            <div class="flex items-center text-sm text-gray-600">
-                                <svg class="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                </svg>
-                                Booked on {{ booking.created_at|date:"M d, Y" }}
-                            </div>
-                            <div class="flex space-x-2">
-                                <button class="text-orange-600 hover:text-orange-800 text-sm font-medium transition-colors">
-                                    View Details
-                                </button>
-                                {% if booking.status == 'upcoming' %}
-                                <button class="text-red-600 hover:text-red-800 text-sm font-medium transition-colors">
-                                    Cancel
-                                </button>
-                                {% endif %}
-                                <button class="text-blue-600 hover:text-blue-800 text-sm font-medium transition-colors">
-                                    Download
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                    {% empty %}
-                    <div class="text-center py-12">
-                        <div class="mx-auto h-24 w-24 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                            <svg class="h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                            </svg>
-                        </div>
-                        <h3 class="text-lg font-medium text-gray-900 mb-2">No bookings yet</h3>
-                        <p class="text-gray-600 mb-4">You haven't made any bus bookings yet. Start your journey today!</p>
-                        <a href="{% url 'home' %}" class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-lg hover:from-orange-600 hover:to-red-600 transition-all duration-200 transform hover:scale-105">
-                            <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-                            </svg>
-                            Book Your First Ticket
-                        </a>
-                    </div>
-                    {% endfor %}
+                {% else %}
+                <div class="alert alert-info">
+                    You don't have any bookings yet. <a href="{% url 'home' %}" style="color: #e67e22;">Book a bus now!</a>
                 </div>
+                {% endif %}
             </div>
         </div>
     </div>
 </div>
-
-<script>
-// Filter functionality
-document.querySelectorAll('.filter-tab').forEach(tab => {
-    tab.addEventListener('click', function() {
-        const filter = this.dataset.filter;
-        
-        // Update active tab
-        document.querySelectorAll('.filter-tab').forEach(t => {
-            t.classList.remove('bg-orange-500', 'text-white');
-            t.classList.add('text-gray-700', 'hover:text-gray-900');
-        });
-        this.classList.add('bg-orange-500', 'text-white');
-        this.classList.remove('text-gray-700', 'hover:text-gray-900');
-        
-        // Filter bookings
-        document.querySelectorAll('.booking-card').forEach(card => {
-            if (filter === 'all' || card.dataset.status === filter) {
-                card.style.display = 'block';
-            } else {
-                card.style.display = 'none';
-            }
-        });
-    });
-});
-
-// Smooth animations
-document.addEventListener('DOMContentLoaded', function() {
-    const cards = document.querySelectorAll('.booking-card');
-    cards.forEach((card, index) => {
-        card.style.animationDelay = `${index * 0.1}s`;
-        card.classList.add('animate-fade-in');
-    });
-});
-</script>
-
-<style>
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.animate-fade-in {
-    animation: fadeIn 0.5s ease-out forwards;
-}
-</style>
 {% endblock %}

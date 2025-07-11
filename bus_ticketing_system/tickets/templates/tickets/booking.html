@@ -1,0 +1,93 @@
+{% extends 'tickets/base.html' %}
+
+{% block title %}Book Bus - Nepal Bus Ticketing{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <div class="card shadow-sm">
+            <div class="card-header" style="background-color: #e67e22; color: white;">
+                <h4>Seat Selection</h4>
+            </div>
+            <div class="card-body">
+                <h5>{{ schedule.bus.company.name }} - {{ schedule.bus.bus_number }}</h5>
+                <p class="text-muted">
+                    {{ schedule.route.origin }} to {{ schedule.route.destination }} | 
+                    {{ schedule.departure_time|date:"D, d M Y" }} at {{ schedule.departure_time|time }}
+                </p>
+                <hr>
+                
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label">Select Seats</label>
+                        <div class="seat-selection">
+                            {% for seat in available_seats %}
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input seat-checkbox" type="checkbox" 
+                                       id="seat-{{ seat }}" name="seat_numbers" value="{{ seat }}">
+                                <label class="form-check-label" for="seat-{{ seat }}">{{ seat }}</label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-warning">Confirm Booking</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card shadow-sm">
+            <div class="card-header" style="background-color: #f39c12; color: white;">
+                <h4>Booking Summary</h4>
+            </div>
+            <div class="card-body">
+                <h5>Journey Details</h5>
+                <p>
+                    <strong>Route:</strong> {{ schedule.route.origin }} to {{ schedule.route.destination }}<br>
+                    <strong>Date:</strong> {{ schedule.departure_time|date:"D, d M Y" }}<br>
+                    <strong>Time:</strong> {{ schedule.departure_time|time }} - {{ schedule.arrival_time|time }}<br>
+                    <strong>Duration:</strong> {{ schedule.route.estimated_time }}
+                </p>
+                <hr>
+                
+                <h5>Fare Details</h5>
+                <p>
+                    <strong>Base Fare:</strong> NPR {{ schedule.price }} per seat<br>
+                    <strong>Selected Seats:</strong> <span id="selected-seats-count">0</span><br>
+                    <strong>Total Amount:</strong> NPR <span id="total-amount">0.00</span>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const checkboxes = document.querySelectorAll('.seat-checkbox');
+    const pricePerSeat = {{ schedule.price }};
+    
+    function updateSummary() {
+        const selectedSeats = Array.from(checkboxes).filter(cb => cb.checked);
+        const selectedSeatsCount = selectedSeats.length;
+        const totalAmount = selectedSeatsCount * pricePerSeat;
+        
+        document.getElementById('selected-seats-count').textContent = selectedSeatsCount;
+        document.getElementById('total-amount').textContent = totalAmount.toFixed(2);
+        
+        // Update form value with comma-separated seat numbers
+        const seatNumbersInput = document.querySelector('input[name="seat_numbers"]');
+        seatNumbersInput.value = selectedSeats.map(cb => cb.value).join(',');
+    }
+    
+    checkboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', updateSummary);
+    });
+});
+</script>
+{% endblock %}

@@ -1,67 +1,36 @@
 from django.contrib import admin
-from .models import *
+from .models import BusCompany, Route, Bus, Schedule, Booking, UserProfile
 
-@admin.register(UserProfile)
-class UserProfileAdmin(admin.ModelAdmin):
-    list_display = ('user', 'phone_number', 'created_at')
-    search_fields = ('user__username', 'user__email', 'phone_number')
-    list_filter = ('created_at',)
+class BusCompanyAdmin(admin.ModelAdmin):
+    list_display = ('name', 'contact_number', 'email')
+    search_fields = ('name', 'contact_number')
 
-@admin.register(Route)
 class RouteAdmin(admin.ModelAdmin):
-    list_display = ('name', 'origin', 'destination', 'distance', 'is_active')
-    list_filter = ('is_active', 'origin', 'destination')
-    search_fields = ('name', 'origin', 'destination')
+    list_display = ('origin', 'destination', 'distance', 'estimated_time')
+    search_fields = ('origin', 'destination')
 
-@admin.register(BusOperator)
-class BusOperatorAdmin(admin.ModelAdmin):
-    list_display = ('name', 'license_number', 'contact_person', 'phone', 'is_active')
-    list_filter = ('is_active', 'created_at')
-    search_fields = ('name', 'license_number', 'contact_person')
-
-@admin.register(Bus)
 class BusAdmin(admin.ModelAdmin):
-    list_display = ('number', 'operator', 'type', 'total_seats', 'is_active')
-    list_filter = ('type', 'is_active', 'operator')
-    search_fields = ('number', 'operator__name')
+    list_display = ('company', 'bus_number', 'bus_type', 'total_seats')
+    list_filter = ('company', 'bus_type')
+    search_fields = ('bus_number',)
 
-@admin.register(Schedule)
 class ScheduleAdmin(admin.ModelAdmin):
-    list_display = ('bus', 'route', 'departure_time', 'arrival_time', 'base_fare', 'is_active')
-    list_filter = ('is_active', 'bus__type', 'effective_from')
-    search_fields = ('bus__number', 'route__name')
+    list_display = ('bus', 'route', 'departure_time', 'arrival_time', 'price', 'available_seats')
+    list_filter = ('bus__company', 'route')
+    search_fields = ('bus__bus_number', 'route__origin', 'route__destination')
 
-@admin.register(Trip)
-class TripAdmin(admin.ModelAdmin):
-    list_display = ('schedule', 'trip_date', 'status', 'available_seats')
-    list_filter = ('status', 'trip_date', 'schedule__bus__type')
-    search_fields = ('schedule__bus__number', 'schedule__route__name')
-    date_hierarchy = 'trip_date'
-
-@admin.register(Seat)
-class SeatAdmin(admin.ModelAdmin):
-    list_display = ('bus', 'seat_number', 'seat_type', 'is_available')
-    list_filter = ('seat_type', 'is_available', 'bus__type')
-    search_fields = ('bus__number', 'seat_number')
-
-@admin.register(Booking)
 class BookingAdmin(admin.ModelAdmin):
-    list_display = ('booking_id', 'user', 'passenger_name', 'trip', 'total_seats', 'total_amount', 'booking_status', 'payment_status')
-    list_filter = ('booking_status', 'payment_status', 'booking_date')
-    search_fields = ('booking_id', 'user__username', 'passenger_name', 'passenger_phone')
-    date_hierarchy = 'booking_date'
-    readonly_fields = ('booking_id', 'booking_date')
+    list_display = ('user', 'schedule', 'seat_numbers', 'booking_date', 'total_price', 'status')
+    list_filter = ('status', 'schedule__bus__company')
+    search_fields = ('user__username', 'payment_reference')
 
-@admin.register(Payment)
-class PaymentAdmin(admin.ModelAdmin):
-    list_display = ('booking', 'amount', 'payment_method', 'payment_status', 'payment_date')
-    list_filter = ('payment_method', 'payment_status', 'payment_date')
-    search_fields = ('booking__booking_id', 'transaction_id', 'reference_number')
-    date_hierarchy = 'payment_date'
+class UserProfileAdmin(admin.ModelAdmin):
+    list_display = ('user', 'phone_number')
+    search_fields = ('user__username', 'phone_number')
 
-@admin.register(Review)
-class ReviewAdmin(admin.ModelAdmin):
-    list_display = ('user', 'booking', 'rating', 'created_at')
-    list_filter = ('rating', 'created_at')
-    search_fields = ('user__username', 'booking__booking_id')
-    date_hierarchy = 'created_at'
+admin.site.register(BusCompany, BusCompanyAdmin)
+admin.site.register(Route, RouteAdmin)
+admin.site.register(Bus, BusAdmin)
+admin.site.register(Schedule, ScheduleAdmin)
+admin.site.register(Booking, BookingAdmin)
+admin.site.register(UserProfile, UserProfileAdmin)
