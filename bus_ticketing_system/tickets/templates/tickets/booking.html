@@ -1,93 +1,99 @@
 {% extends 'tickets/base.html' %}
+{% load static %}
 
-{% block title %}Book Bus - Nepal Bus Ticketing{% endblock %}
+{% block title %}Book Your Ticket - Nepal Bus Ticketing{% endblock %}
 
 {% block content %}
 <div class="row">
     <div class="col-md-8">
-        <div class="card shadow-sm">
-            <div class="card-header" style="background-color: #e67e22; color: white;">
-                <h4>Seat Selection</h4>
+        <div class="card mb-4">
+            <div class="card-header bg-orange text-white">
+                <h4><i class="fas fa-ticket-alt"></i> Book Your Ticket</h4>
             </div>
             <div class="card-body">
-                <h5>{{ schedule.bus.company.name }} - {{ schedule.bus.bus_number }}</h5>
-                <p class="text-muted">
-                    {{ schedule.route.origin }} to {{ schedule.route.destination }} | 
-                    {{ schedule.departure_time|date:"D, d M Y" }} at {{ schedule.departure_time|time }}
-                </p>
-                <hr>
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <h5>{{ schedule.bus.company.name }}</h5>
+                        <p class="mb-1"><strong>Bus Number:</strong> {{ schedule.bus.bus_number }}</p>
+                        <p class="mb-1"><strong>Type:</strong> {{ schedule.bus.bus_type }}</p>
+                        <p class="mb-1"><strong>Departure:</strong> {{ schedule.departure_time }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h5>Route Details</h5>
+                        <p class="mb-1"><strong>From:</strong> {{ schedule.route.origin }}</p>
+                        <p class="mb-1"><strong>To:</strong> {{ schedule.route.destination }}</p>
+                        <p class="mb-1"><strong>Arrival:</strong> {{ schedule.arrival_time }}</p>
+                    </div>
+                </div>
                 
                 <form method="post">
                     {% csrf_token %}
                     <div class="mb-3">
-                        <label class="form-label">Select Seats</label>
-                        <div class="seat-selection">
-                            {% for seat in available_seats %}
-                            <div class="form-check form-check-inline">
-                                <input class="form-check-input seat-checkbox" type="checkbox" 
-                                       id="seat-{{ seat }}" name="seat_numbers" value="{{ seat }}">
-                                <label class="form-check-label" for="seat-{{ seat }}">{{ seat }}</label>
+                        <label class="form-label"><strong>Select Seats ({{ passengers }} needed)</strong></label>
+                        <div class="seat-layout mb-3">
+                            <div class="bus-outline">
+                                <div class="driver-seat">Driver</div>
+                                {% for seat in seat_range %}
+                                <div class="seat {% if seat in booked_seats %}booked{% else %}available{% endif %}"
+                                     data-seat="{{ seat }}">
+                                    {{ seat }}
+                                </div>
+                                {% endfor %}
                             </div>
-                            {% endfor %}
                         </div>
+                        {{ form.seat_numbers }}
                     </div>
-                    <div class="d-grid gap-2">
-                        <button type="submit" class="btn btn-warning">Confirm Booking</button>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="text-orange">Total: NPR {{ total_price }}</h5>
+                        </div>
+                        <button type="submit" class="btn btn-orange">
+                            <i class="fas fa-credit-card"></i> Confirm Booking
+                        </button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
-    
     <div class="col-md-4">
-        <div class="card shadow-sm">
-            <div class="card-header" style="background-color: #f39c12; color: white;">
-                <h4>Booking Summary</h4>
+        <div class="card mb-4">
+            <div class="card-header bg-orange text-white">
+                <h4><i class="fas fa-info-circle"></i> Booking Summary</h4>
             </div>
             <div class="card-body">
-                <h5>Journey Details</h5>
-                <p>
-                    <strong>Route:</strong> {{ schedule.route.origin }} to {{ schedule.route.destination }}<br>
-                    <strong>Date:</strong> {{ schedule.departure_time|date:"D, d M Y" }}<br>
-                    <strong>Time:</strong> {{ schedule.departure_time|time }} - {{ schedule.arrival_time|time }}<br>
-                    <strong>Duration:</strong> {{ schedule.route.estimated_time }}
-                </p>
-                <hr>
-                
-                <h5>Fare Details</h5>
-                <p>
-                    <strong>Base Fare:</strong> NPR {{ schedule.price }} per seat<br>
-                    <strong>Selected Seats:</strong> <span id="selected-seats-count">0</span><br>
-                    <strong>Total Amount:</strong> NPR <span id="total-amount">0.00</span>
-                </p>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>Base Fare (x{{ passengers }})</span>
+                        <span>NPR {{ base_price }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>Service Fee</span>
+                        <span>NPR 50</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <strong>Total Amount</strong>
+                        <strong>NPR {{ total_price }}</strong>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header bg-orange text-white">
+                <h4><i class="fas fa-shield-alt"></i> Safe Travel</h4>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled">
+                    <li class="mb-2"><i class="fas fa-check-circle text-success"></i> Verified bus operators</li>
+                    <li class="mb-2"><i class="fas fa-check-circle text-success"></i> Secure payment options</li>
+                    <li class="mb-2"><i class="fas fa-check-circle text-success"></i> 24/7 customer support</li>
+                </ul>
             </div>
         </div>
     </div>
 </div>
 {% endblock %}
 
-{% block extra_js %}
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const checkboxes = document.querySelectorAll('.seat-checkbox');
-    const pricePerSeat = {{ schedule.price }};
-    
-    function updateSummary() {
-        const selectedSeats = Array.from(checkboxes).filter(cb => cb.checked);
-        const selectedSeatsCount = selectedSeats.length;
-        const totalAmount = selectedSeatsCount * pricePerSeat;
-        
-        document.getElementById('selected-seats-count').textContent = selectedSeatsCount;
-        document.getElementById('total-amount').textContent = totalAmount.toFixed(2);
-        
-        // Update form value with comma-separated seat numbers
-        const seatNumbersInput = document.querySelector('input[name="seat_numbers"]');
-        seatNumbersInput.value = selectedSeats.map(cb => cb.value).join(',');
-    }
-    
-    checkboxes.forEach(checkbox => {
-        checkbox.addEventListener('change', updateSummary);
-    });
-});
-</script>
+{% block scripts %}
+<script src="{% static 'tickets/js/seat_selection.js' %}"></script>
 {% endblock %}

@@ -5,7 +5,8 @@ from .models import Bus, Route, Schedule, Booking, UserProfile
 from .forms import UserRegisterForm, UserLoginForm, BookingForm, UserProfileForm, SearchForm
 from django.contrib import messages
 from django.db.models import Q
-from datetime import datetime
+from datetime import datetime, timedelta
+from django.utils import timezone
 
 def home(request):
     if request.method == 'POST':
@@ -20,7 +21,18 @@ def home(request):
         form = SearchForm()
     
     popular_routes = Route.objects.all()[:6]
-    return render(request, 'tickets/home.html', {'form': form, 'popular_routes': popular_routes})
+    
+    # Calculate dates for today and tomorrow
+    today = timezone.now().strftime('%Y-%m-%d')
+    tomorrow = (timezone.now() + timedelta(days=1)).strftime('%Y-%m-%d')
+    
+    context = {
+        'form': form,
+        'popular_routes': popular_routes,
+        'today': today,
+        'tomorrow': tomorrow,
+    }
+    return render(request, 'tickets/home.html', context)
 
 def bus_list(request, origin, destination, date):
     try:
@@ -35,11 +47,18 @@ def bus_list(request, origin, destination, date):
         departure_time__date=date_obj
     ).select_related('bus', 'route', 'bus__company')
     
+    # Calculate dates for navigation
+    current_date = datetime.strptime(date, '%Y-%m-%d')
+    previous_day = (current_date - timedelta(days=1)).strftime('%Y-%m-%d')
+    next_day = (current_date + timedelta(days=1)).strftime('%Y-%m-%d')
+    
     context = {
         'schedules': schedules,
         'origin': origin,
         'destination': destination,
         'date': date,
+        'previous_day': previous_day,
+        'next_day': next_day,
     }
     return render(request, 'tickets/bus_list.html', context)
 
@@ -55,7 +74,7 @@ def booking(request, schedule_id):
             
             if num_seats > schedule.available_seats:
                 messages.error(request, "Not enough seats available")
-                return redirect('bus_list', origin=schedule.route.origin, destination=schedule.route.destination, date=schedule.departure_time.date())
+                return redirect('bus_list', origin=schedule.route.origin, destination=schedule.route.destination, date=schedule.departure_time.strftime('%Y-%m-%d'))
             
             total_price = schedule.price * num_seats
             booking = Booking.objects.create(
